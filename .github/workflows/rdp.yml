@@ -8,11 +8,10 @@ jobs:
     timeout-minutes: 3600
 
     steps:
-    - name: Download & Install Ngrok
+    - name: Install Ngrok via Choco
       run: |
-        Invoke-WebRequest -Uri "https://cdn.ngrok.com/ngrok-v3-stable-windows-amd64.zip" -OutFile "ngrok.zip"
-        Expand-Archive -Path "ngrok.zip" -DestinationPath "."
-        .\ngrok.exe config add-authtoken ${{ secrets.NGROK_AUTHTOKEN }}
+        choco install ngrok -y
+        ngrok config add-authtoken ${{ secrets.NGROK_AUTHTOKEN }}
 
     - name: Enable RDP Access
       run: |
@@ -29,11 +28,11 @@ jobs:
 
     - name: Start Ngrok Tunnel
       run: |
-        Start-Process -FilePath ".\ngrok.exe" -ArgumentList "tcp 3389"
+        Start-Process -FilePath "ngrok" -ArgumentList "tcp 3389"
 
     - name: Output RDP Info & Keep Alive
       run: |
-        Start-Sleep -Seconds 8
+        Start-Sleep -Seconds 10
         $response = Invoke-RestMethod -Uri "http://127.0.0.1:4040/api/tunnels"
         $publicUrl = $response.tunnels[0].public_url -replace 'tcp://', ''
         Write-Host "`n========================================================"
