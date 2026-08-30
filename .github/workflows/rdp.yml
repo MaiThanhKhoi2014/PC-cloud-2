@@ -32,9 +32,17 @@ jobs:
 
     - name: Output RDP Info & Keep Alive
       run: |
-        Start-Sleep -Seconds 10
-        $response = Invoke-RestMethod -Uri "http://127.0.0.1:4040/api/tunnels"
-        $publicUrl = $response.tunnels[0].public_url -replace 'tcp://', ''
+        $url = $null
+        while ($null -eq $url) {
+            Start-Sleep -Seconds 5
+            try {
+                $response = Invoke-RestMethod -Uri "http://127.0.0.1:4040/api/tunnels" -ErrorAction Stop
+                $url = $response.tunnels[0].public_url
+            } catch {
+                Write-Host "Dang cho Ngrok khoi tao..."
+            }
+        }
+        $publicUrl = $url -replace 'tcp://', ''
         Write-Host "`n========================================================"
         Write-Host " DIA CHI KET NOI RDP: $publicUrl"
         Write-Host " USERNAME           : RDP"
