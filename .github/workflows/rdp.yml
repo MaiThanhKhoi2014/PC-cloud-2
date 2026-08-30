@@ -11,7 +11,6 @@ jobs:
     - name: Install Ngrok via Choco
       run: |
         choco install ngrok -y
-        ngrok config add-authtoken ${{ secrets.NGROK_AUTHTOKEN }}
 
     - name: Enable RDP Access
       run: |
@@ -28,24 +27,35 @@ jobs:
 
     - name: Start Ngrok Tunnel
       run: |
-        Start-Process -FilePath "ngrok" -ArgumentList "tcp 3389"
+        ngrok config add-authtoken ${{ secrets.NGROK_AUTHTOKEN }}
+        Start-Process -FilePath "ngrok" -ArgumentList "tcp 3389 --log=stdout" -RedirectStandardOutput "ngrok.log" -RedirectStandardError "ngrok_err.log"
 
     - name: Output RDP Info & Keep Alive
       run: |
         $url = $null
-        while ($null -eq $url) {
-            Start-Sleep -Seconds 5
+        $count = 0
+        while ($null -eq $url -and $count -lt 10) {
+            Start-Sleep -Seconds 3
+            $count++
             try {
                 $response = Invoke-RestMethod -Uri "http://127.0.0.1:4040/api/tunnels" -ErrorAction Stop
                 $url = $response.tunnels[0].public_url
             } catch {
-                Write-Host "Dang cho Ngrok khoi tao..."
+                Write-Host "Dang kiem tra Ngrok API (Lan $count/10)..."
             }
         }
-        $publicUrl = $url -replace 'tcp://', ''
-        Write-Host "`n========================================================"
-        Write-Host " DIA CHI KET NOI RDP: $publicUrl"
-        Write-Host " USERNAME           : RDP"
-        Write-Host " PASSWORD           : Khoi@14042000!"
-        Write-Host "========================================================`n"
-        while ($true) { Start-Sleep -Seconds 300 }
+        
+        if ($null -ne $url) {
+            $publicUrl = $url -replace 'tcp://', ''
+            Write-Host "`n========================================================"
+            Write-Host " DIA CHI KET NOI RDP: $publicUrl"
+            Write-Host " USERNAME           : RDP"
+            Write-Host " PASSWORD           : Khoi@14042000!"
+            Write-Host "========================================================`n"
+            while ($true) { Start-Sleep -Seconds 300 }
+        } else {
+            Write-Host "`n[!] KET NOI NGROK THAT BAI. CHI TIET LOI BENE DUOI:"
+            if (Test-Path "ngrok.log") { Get-Content "ngrok.log" }
+            if (Test-Path "ngrok_err.log") { Get-Content "ngrok_err.log" }
+            exit 1
+        }
