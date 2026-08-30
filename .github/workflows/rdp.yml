@@ -21,7 +21,7 @@ jobs:
 
     - name: Create RDP Account
       run: |
-        $password = ConvertTo-SecureString "RDPpassword123!" -AsPlainText -Force
+        $password = ConvertTo-SecureString "Admin@RDP#2026!" -AsPlainText -Force
         New-LocalUser -Name "RDP" -Password $password -AccountNeverExpires -PasswordNeverExpires
         Add-LocalGroupMember -Group "Administrators" -Member "RDP"
         Add-LocalGroupMember -Group "Remote Desktop Users" -Member "RDP"
@@ -38,6 +38,6 @@ jobs:
         Write-Host "`n========================================================"
         Write-Host " DIA CHI KET NOI RDP: $publicUrl"
         Write-Host " USERNAME           : RDP"
-        Write-Host " PASSWORD           : RDPpassword123!"
+        Write-Host " PASSWORD           : Admin@RDP#2026!"
         Write-Host "========================================================`n"
         while ($true) { Start-Sleep -Seconds 300 }
